@@ -1,0 +1,18 @@
+    body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-image: url('https://i.postimg.cc/R00x1vGZ/z6981637907771-66fecda8965de87830010837e211a71d.jpg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  z-index: -1;
+}
+
+
+                h5{
+                    color: red;
+                    text-align: center;
+                }

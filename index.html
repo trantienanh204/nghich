@@ -87,7 +87,8 @@
         // API key của bạn đã được cấu hình.
         const API_KEY = "AIzaSyBxbfi4h-fJMy1W7RcoLepJmHgmaBLKaMo";
         const TEXT_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
-        const IMAGE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${API_KEY}`;
+        // SỬA LỖI: Chuyển sang mô hình gemini-2.5-flash-image-preview để tương thích với client-side
+        const IMAGE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${API_KEY}`;
 
         // Hàm để hiển thị tin nhắn (văn bản hoặc hình ảnh)
         function addMessage(content, sender) {
@@ -137,12 +138,18 @@
             if (indicator) indicator.remove();
         }
         
-        // Hàm gọi API tạo ảnh
+        // SỬA LỖI: Cập nhật hàm tạo ảnh để dùng payload của Gemini
         async function generateImage(prompt) {
             try {
-                const payload = { 
-                    instances: [{ prompt: prompt }],
-                    parameters: { "sampleCount": 1 } 
+                // Thêm chi tiết vào prompt để có kết quả tốt hơn
+                const detailedPrompt = `Một bức ảnh chất lượng cao, siêu thực về: ${prompt}`;
+                const payload = {
+                    contents: [{
+                        parts: [{ text: detailedPrompt }]
+                    }],
+                    generationConfig: {
+                        responseModalities: ['IMAGE']
+                    },
                 };
                 const response = await fetch(IMAGE_API_URL, {
                     method: 'POST',
@@ -153,12 +160,13 @@
                 if (!response.ok) throw new Error(`API error: ${response.status}`);
 
                 const result = await response.json();
-                const base64Data = result.predictions?.[0]?.bytesBase64Encoded;
+                // SỬA LỖI: Dữ liệu ảnh nằm trong 'candidates', không phải 'predictions'
+                const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
 
                 if (base64Data) {
                     return `data:image/png;base64,${base64Data}`;
                 }
-                return "Xin lỗi, tôi không thể tạo ảnh lúc này.";
+                return "Xin lỗi, tôi không thể tạo ảnh. Phản hồi API không chứa dữ liệu hình ảnh.";
             } catch (error) {
                 console.error("Lỗi khi tạo ảnh:", error);
                 return "Rất tiếc, đã có lỗi khi tạo ảnh. Vui lòng thử lại.";

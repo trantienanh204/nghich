@@ -84,38 +84,31 @@
         const sendBtn = document.getElementById('send-btn');
         let chatHistory = [];
 
-        // API key của bạn đã được cấu hình.
         const API_KEY = "AIzaSyBxbfi4h-fJMy1W7RcoLepJmHgmaBLKaMo";
         const TEXT_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
-        // SỬA LỖI: Chuyển sang mô hình gemini-2.5-flash-image-preview để tương thích với client-side
         const IMAGE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${API_KEY}`;
 
-        // Hàm để hiển thị tin nhắn (văn bản hoặc hình ảnh)
+        // Hàm sleep để tạo độ trễ
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
         function addMessage(content, sender) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `flex mb-4 ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
-
             const messageBubble = document.createElement('div');
             messageBubble.className = `max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
-                sender === 'user'
-                    ? 'bg-blue-600 text-white rounded-br-none'
-                    : 'bg-gray-200 text-gray-800 rounded-bl-none'
+                sender === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-200 text-gray-800 rounded-bl-none'
             }`;
-
-            // Kiểm tra nội dung là văn bản hay URL hình ảnh
             if (content.startsWith('data:image/')) {
                  messageBubble.innerHTML = `<img src="${content}" alt="Generated Image" class="message-image">`;
-                 messageBubble.classList.remove('px-4', 'py-3'); // Xóa padding cho ảnh
+                 messageBubble.classList.remove('px-4', 'py-3');
             } else {
                 messageBubble.textContent = content;
             }
-
             messageDiv.appendChild(messageBubble);
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // Hiển thị chỉ báo đang gõ
         function showTypingIndicator(text = "") {
             const typingDiv = document.createElement('div');
             typingDiv.id = 'typing-indicator';
@@ -123,57 +116,71 @@
             typingDiv.innerHTML = `
                 <div class="bg-gray-200 px-4 py-3 rounded-2xl rounded-bl-none">
                     ${text ? `<p class="text-sm text-gray-600 mb-1">${text}</p>` : ''}
-                    <div class="typing-indicator">
-                        <span></span><span></span><span></span>
-                    </div>
-                </div>
-            `;
+                    <div class="typing-indicator"><span></span><span></span><span></span></div>
+                </div>`;
             chatMessages.appendChild(typingDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // Ẩn chỉ báo đang gõ
         function hideTypingIndicator() {
             const indicator = document.getElementById('typing-indicator');
             if (indicator) indicator.remove();
         }
         
-        // SỬA LỖI: Cập nhật hàm tạo ảnh để dùng payload của Gemini
+        // SỬA LỖI: Thêm logic thử lại (Exponential Backoff) khi gặp lỗi 429
+        async function fetchWithRetry(url, payload, maxRetries = 3) {
+            let lastError;
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                    
+                    if (response.status === 429) {
+                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                        console.warn(`Rate limited. Retrying in ${delay.toFixed(0)}ms...`);
+                        await sleep(delay);
+                        lastError = new Error(`API error: ${response.status} (Rate Limited)`);
+                        continue; // Thử lại
+                    }
+                    
+                    lastError = new Error(`API error: ${response.status}`);
+                    break; // Thoát vòng lặp với các lỗi khác
+
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+            throw lastError;
+        }
+
         async function generateImage(prompt) {
             try {
-                // Thêm chi tiết vào prompt để có kết quả tốt hơn
                 const detailedPrompt = `Một bức ảnh chất lượng cao, siêu thực về: ${prompt}`;
                 const payload = {
-                    contents: [{
-                        parts: [{ text: detailedPrompt }]
-                    }],
-                    generationConfig: {
-                        responseModalities: ['IMAGE']
-                    },
+                    contents: [{ parts: [{ text: detailedPrompt }] }],
+                    generationConfig: { responseModalities: ['IMAGE'] },
                 };
-                const response = await fetch(IMAGE_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
 
-                if (!response.ok) throw new Error(`API error: ${response.status}`);
-
-                const result = await response.json();
-                // SỬA LỖI: Dữ liệu ảnh nằm trong 'candidates', không phải 'predictions'
+                const result = await fetchWithRetry(IMAGE_API_URL, payload);
+                
                 const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-
                 if (base64Data) {
                     return `data:image/png;base64,${base64Data}`;
                 }
-                return "Xin lỗi, tôi không thể tạo ảnh. Phản hồi API không chứa dữ liệu hình ảnh.";
+                return "Xin lỗi, không thể tạo ảnh. Phản hồi API không chứa dữ liệu hình ảnh.";
             } catch (error) {
                 console.error("Lỗi khi tạo ảnh:", error);
-                return "Rất tiếc, đã có lỗi khi tạo ảnh. Vui lòng thử lại.";
+                return `Rất tiếc, đã có lỗi khi tạo ảnh. (${error.message})`;
             }
         }
         
-        // Hàm gọi API Gemini để nhận phản hồi văn bản
         async function getAIResponse(prompt) {
             chatHistory.push({ role: "user", parts: [{ text: prompt }] });
             try {
@@ -181,13 +188,9 @@
                     contents: chatHistory,
                     systemInstruction: { parts: [{ text: "Bạn là một trợ lý chatbot thân thiện và hữu ích. Hãy trả lời một cách ngắn gọn và tự nhiên." }] },
                 };
-                const response = await fetch(TEXT_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) throw new Error(`API error: ${response.status}`);
-                const result = await response.json();
+
+                const result = await fetchWithRetry(TEXT_API_URL, payload);
+
                 const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (aiText) {
                     chatHistory.push({ role: "model", parts: [{ text: aiText }] });
@@ -195,17 +198,15 @@
                 }
                 return "Xin lỗi, tôi không thể tạo ra phản hồi lúc này.";
             } catch (error) {
-                console.error("Lỗi khi gọi API:", error);
+                console.error("Lỗi khi gọi API văn bản:", error);
                 chatHistory.pop();
-                return "Rất tiếc, đã có lỗi xảy ra. Vui lòng thử lại sau.";
+                return `Rất tiếc, đã có lỗi xảy ra. (${error.message})`;
             }
         }
 
-        // Hàm xử lý khi người dùng gửi tin nhắn
         async function handleUserMessage() {
             const message = userInput.value.trim();
             if (message === '') return;
-
             addMessage(message, 'user');
             userInput.value = '';
             userInput.disabled = true;
@@ -216,7 +217,6 @@
 
             let botResponse;
             if (isImageRequest) {
-                // Xóa từ khóa khỏi prompt để nội dung ảnh chính xác hơn
                 const prompt = message.replace(new RegExp(imageKeywords.join('|'), 'i'), '').trim();
                 showTypingIndicator('Đang vẽ, chờ chút nhé...');
                 botResponse = await generateImage(prompt);
@@ -227,7 +227,6 @@
             
             hideTypingIndicator();
             addMessage(botResponse, 'bot');
-            
             userInput.disabled = false;
             sendBtn.disabled = false;
             userInput.focus();

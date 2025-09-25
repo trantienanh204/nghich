@@ -1,20 +1,223 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Xin tiền sống qua ngày</title>
-  <link rel="stylesheet" href="css/indexCSS.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <!-- Tích hợp Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Tùy chỉnh thanh cuộn cho đẹp hơn */
+        #chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        #chat-messages::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        #chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Hiệu ứng gõ phím */
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #888;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(2) {
+            animation-delay: -0.32s;
+        }
+        .typing-indicator span:nth-child(3) {
+            animation-delay: -0.16s;
+        }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+    </style>
 </head>
-<body>
-  <div class="overlay"></div>
-  <div class="container">
-    <h1>💸 Bạn có thể cho tôi xin tiền sống qua ngày không?</h1>
-    <div class="btn-group">
-      <button id="link-btn" class="btn btn-yes">💖 Cho</button>
-      <button id="dodge-btn" class="btn btn-no">😂 Xin ngược lại</button>
-    </div>
-  </div>
+<body class="bg-gray-100 font-sans flex items-center justify-center min-h-screen">
 
-  <script src="js/index.js"></script>
+    <div class="w-full max-w-lg mx-auto bg-white rounded-2xl shadow-2xl flex flex-col h-[80vh]">
+        <!-- Header -->
+        <div class="bg-blue-600 text-white p-4 rounded-t-2xl flex items-center shadow-md">
+            <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mr-4">
+                 <!-- Biểu tượng Bot SVG -->
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V3m0 18v-3M5.636 5.636L4.222 4.222m15.556 15.556L18.364 18.364M18.364 5.636L19.778 4.222m-15.556 15.556L5.636 18.364M12 16a4 4 0 100-8 4 4 0 000 8z"></path></svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold">AI Chatbot Trợ Lý</h1>
+                <p class="text-sm text-blue-200">Đang hoạt động</p>
+            </div>
+        </div>
+
+        <!-- Khung Chat -->
+        <div id="chat-messages" class="flex-1 p-6 overflow-y-auto">
+            <!-- Tin nhắn sẽ được thêm vào đây -->
+        </div>
+
+        <!-- Khung nhập liệu -->
+        <div class="p-4 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
+            <div class="flex items-center space-x-3">
+                <input type="text" id="user-input" placeholder="Nhập tin nhắn của bạn..." class="flex-1 p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition" disabled>
+                <button id="send-btn" class="bg-blue-600 text-white rounded-full p-3 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition transform hover:scale-105" disabled>
+                    <!-- Biểu tượng Gửi SVG -->
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap-round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        let chatHistory = [];
+
+        // *** QUAN TRỌNG: Dán API key của bạn vào đây ***
+        // API key này đã được bảo vệ bằng giới hạn HTTP referrer
+        const API_KEY = "AIzaSyBxbfi4h-fJMy1W7RcoLepJmHgmaBLKaMo";
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+
+
+        // Hàm để hiển thị tin nhắn trong khung chat
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex mb-4 ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+
+            const messageBubble = document.createElement('div');
+            messageBubble.textContent = text;
+            messageBubble.className = `max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
+                sender === 'user'
+                    ? 'bg-blue-600 text-white rounded-br-none'
+                    : 'bg-gray-200 text-gray-800 rounded-bl-none'
+            }`;
+
+            messageDiv.appendChild(messageBubble);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Hiển thị chỉ báo đang gõ
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'flex justify-start mb-4';
+            typingDiv.innerHTML = `
+                <div class="bg-gray-200 px-4 py-3 rounded-2xl rounded-bl-none">
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Ẩn chỉ báo đang gõ
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+        
+        // Hàm gọi API Gemini để nhận phản hồi
+        async function getAIResponse(prompt) {
+             // Thêm tin nhắn mới của người dùng vào lịch sử chat
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+            try {
+                const payload = {
+                    contents: chatHistory,
+                     // Hướng dẫn hệ thống
+                    systemInstruction: {
+                        parts: [{ text: "Bạn là một trợ lý chatbot thân thiện và hữu ích. Hãy trả lời một cách ngắn gọn và tự nhiên." }]
+                    },
+                };
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+                const aiText = candidate?.content?.parts?.[0]?.text;
+
+                if (aiText) {
+                    // Thêm phản hồi của AI vào lịch sử chat
+                    chatHistory.push({ role: "model", parts: [{ text: aiText }] });
+                    return aiText;
+                } else {
+                    return "Xin lỗi, tôi không thể tạo ra phản hồi lúc này.";
+                }
+
+            } catch (error) {
+                console.error("Lỗi khi gọi API:", error);
+                // Xóa tin nhắn cuối cùng của người dùng khỏi lịch sử nếu có lỗi
+                chatHistory.pop();
+                return "Rất tiếc, đã có lỗi xảy ra. Vui lòng thử lại sau.";
+            }
+        }
+
+        // Hàm xử lý khi người dùng gửi tin nhắn
+        async function handleUserMessage() {
+            const message = userInput.value.trim();
+            if (message === '' || API_KEY === "AIzaSyBxbfi4h-fJMy1W7RcoLepJmHgmaBLKaMo") {
+                if(API_KEY === "AIzaSyBxbfi4h-fJMy1W7RcoLepJmHgmaBLKaMo"){
+                    addMessage("Vui lòng cấu hình API key trong file HTML trước khi sử dụng.", "bot");
+                }
+                return;
+            };
+
+            addMessage(message, 'user');
+            userInput.value = '';
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+
+            showTypingIndicator();
+
+            const botResponse = await getAIResponse(message);
+            
+            hideTypingIndicator();
+            addMessage(botResponse, 'bot');
+            
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            userInput.focus();
+        }
+
+        // Gán sự kiện cho nút gửi và phím Enter
+        sendBtn.addEventListener('click', handleUserMessage);
+        userInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                handleUserMessage();
+            }
+        });
+
+        // Tin nhắn chào mừng ban đầu từ bot
+        window.addEventListener('load', () => {
+            if (API_KEY === "DÁN_API_KEY_CỦA_BẠN_VÀO_ĐÂY") {
+                addMessage('Xin chào! Vui lòng cấu hình API key của Google AI trong mã nguồn để tôi có thể hoạt động.', 'bot');
+            } else {
+                addMessage('Xin chào! Tôi là một chatbot AI. Bạn muốn trò chuyện về điều gì?', 'bot');
+            }
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+        });
+    </script>
 </body>
 </html>
+

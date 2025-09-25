@@ -7,19 +7,19 @@
     <!-- Tích hợp Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Tùy chỉnh thanh cuộn cho đẹp hơn */
+        /* Tùy chỉnh thanh cuộn cho giao diện tối */
         #chat-messages::-webkit-scrollbar {
             width: 8px;
         }
         #chat-messages::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: #1f2937; /* bg-gray-800 */
         }
         #chat-messages::-webkit-scrollbar-thumb {
-            background: #888;
+            background: #4b5563; /* bg-gray-600 */
             border-radius: 4px;
         }
         #chat-messages::-webkit-scrollbar-thumb:hover {
-            background: #555;
+            background: #6b7280; /* bg-gray-500 */
         }
         /* Hiệu ứng gõ phím */
         .typing-indicator span {
@@ -27,7 +27,7 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background-color: #888;
+            background-color: #9ca3af; /* text-gray-400 */
             animation: bounce 1.4s infinite ease-in-out both;
         }
         .typing-indicator span:nth-child(2) {
@@ -46,31 +46,31 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 font-sans flex items-center justify-center min-h-screen">
+<body class="bg-gray-900 font-sans flex items-center justify-center min-h-screen">
 
-    <div class="w-full max-w-lg mx-auto bg-white rounded-2xl shadow-2xl flex flex-col h-[80vh]">
+    <div class="w-full max-w-lg mx-auto bg-gray-800 rounded-2xl shadow-2xl flex flex-col h-[80vh]">
         <!-- Header -->
-        <div class="bg-blue-600 text-white p-4 rounded-t-2xl flex items-center shadow-md">
-            <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mr-4">
+        <div class="bg-gray-900 text-white p-4 rounded-t-2xl flex items-center shadow-lg border-b border-gray-700">
+            <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center mr-4 ring-2 ring-indigo-500">
                  <!-- Biểu tượng Bot SVG -->
-                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V3m0 18v-3M5.636 5.636L4.222 4.222m15.556 15.556L18.364 18.364M18.364 5.636L19.778 4.222m-15.556 15.556L5.636 18.364M12 16a4 4 0 100-8 4 4 0 000 8z"></path></svg>
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V3m0 18v-3M5.636 5.636L4.222 4.222m15.556 15.556L18.364 18.364M18.364 5.636L19.778 4.222m-15.556 15.556L5.636 18.364M12 16a4 4 0 100-8 4 4 0 000 8z"></path></svg>
             </div>
             <div>
-                <h1 class="text-xl font-bold">AI Chatbot Sáng Tạo</h1>
-                <p class="text-sm text-blue-200">Hỗ trợ trò chuyện & tạo ảnh</p>
+                <h1 class="text-xl font-bold text-gray-100">AI Chatbot Sáng Tạo</h1>
+                <p class="text-sm text-green-400">Đang hoạt động</p>
             </div>
         </div>
 
         <!-- Khung Chat -->
-        <div id="chat-messages" class="flex-1 p-6 overflow-y-auto">
+        <div id="chat-messages" class="flex-1 p-6 overflow-y-auto bg-gray-800">
             <!-- Tin nhắn sẽ được thêm vào đây -->
         </div>
 
         <!-- Khung nhập liệu -->
-        <div class="p-4 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
+        <div class="p-4 bg-gray-900 border-t border-gray-700 rounded-b-2xl">
             <div class="flex items-center space-x-3">
-                <input type="text" id="user-input" placeholder="Nhập tin nhắn hoặc yêu cầu vẽ..." class="flex-1 p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition" disabled>
-                <button id="send-btn" class="bg-blue-600 text-white rounded-full p-3 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition transform hover:scale-105" disabled>
+                <input type="text" id="user-input" placeholder="Nhập tin nhắn hoặc yêu cầu vẽ..." class="flex-1 p-3 bg-gray-700 text-gray-200 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 transition placeholder-gray-400" disabled>
+                <button id="send-btn" class="bg-indigo-600 text-white rounded-full p-3 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition transform hover:scale-105" disabled>
                     <!-- Biểu tượng Gửi SVG -->
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </button>
@@ -95,8 +95,9 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `flex mb-4 ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
             const messageBubble = document.createElement('div');
+            // THAY ĐỔI GIAO DIỆN: Cập nhật màu sắc cho tin nhắn
             messageBubble.className = `max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
-                sender === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-200 text-gray-800 rounded-bl-none'
+                sender === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-gray-700 text-gray-200 rounded-bl-none'
             }`;
             if (content.startsWith('data:image/')) {
                  messageBubble.innerHTML = `<img src="${content}" alt="Generated Image" class="message-image">`;
@@ -113,9 +114,10 @@
             const typingDiv = document.createElement('div');
             typingDiv.id = 'typing-indicator';
             typingDiv.className = 'flex justify-start mb-4';
+            // THAY ĐỔI GIAO DIỆN: Cập nhật màu cho chỉ báo đang gõ
             typingDiv.innerHTML = `
-                <div class="bg-gray-200 px-4 py-3 rounded-2xl rounded-bl-none">
-                    ${text ? `<p class="text-sm text-gray-600 mb-1">${text}</p>` : ''}
+                <div class="bg-gray-700 px-4 py-3 rounded-2xl rounded-bl-none">
+                    ${text ? `<p class="text-sm text-gray-400 mb-1">${text}</p>` : ''}
                     <div class="typing-indicator"><span></span><span></span><span></span></div>
                 </div>`;
             chatMessages.appendChild(typingDiv);
@@ -127,7 +129,6 @@
             if (indicator) indicator.remove();
         }
         
-        // SỬA LỖI: Thêm logic thử lại (Exponential Backoff) khi gặp lỗi 429
         async function fetchWithRetry(url, payload, maxRetries = 3) {
             let lastError;
             for (let i = 0; i < maxRetries; i++) {
@@ -146,12 +147,12 @@
                         const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
                         console.warn(`Rate limited. Retrying in ${delay.toFixed(0)}ms...`);
                         await sleep(delay);
-                        lastError = new Error(`API error: ${response.status} (Rate Limited)`);
-                        continue; // Thử lại
+                        lastError = new Error(`API_RATE_LIMITED`); // Sử dụng mã lỗi đặc biệt
+                        continue; 
                     }
                     
-                    lastError = new Error(`API error: ${response.status}`);
-                    break; // Thoát vòng lặp với các lỗi khác
+                    lastError = new Error(`Lỗi API: ${response.status}`);
+                    break; 
 
                 } catch (error) {
                     lastError = error;
@@ -177,6 +178,9 @@
                 return "Xin lỗi, không thể tạo ảnh. Phản hồi API không chứa dữ liệu hình ảnh.";
             } catch (error) {
                 console.error("Lỗi khi tạo ảnh:", error);
+                if (error.message === 'API_RATE_LIMITED') {
+                    return "Tôi đang nhận được quá nhiều yêu cầu tạo ảnh. Vui lòng thử lại sau vài phút nhé.";
+                }
                 return `Rất tiếc, đã có lỗi khi tạo ảnh. (${error.message})`;
             }
         }
@@ -200,6 +204,9 @@
             } catch (error) {
                 console.error("Lỗi khi gọi API văn bản:", error);
                 chatHistory.pop();
+                if (error.message === 'API_RATE_LIMITED') {
+                     return "Tôi đang nhận được quá nhiều yêu cầu. Vui lòng thử lại sau giây lát.";
+                }
                 return `Rất tiếc, đã có lỗi xảy ra. (${error.message})`;
             }
         }

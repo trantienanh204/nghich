@@ -1,7 +1,7 @@
-    const chatMessages = document.getElementById('chat-messages');
+const chatMessages = document.getElementById('chat-messages');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
-        const clearChatBtn = document.getElementById('clear-chat-btn'); // Lấy nút mới
+        const clearChatBtn = document.getElementById('clear-chat-btn');
         
         let userId;
         let chatHistory = [];
@@ -11,6 +11,16 @@
         const IMAGE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${API_KEY}`;
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+        const systemPrompt = `
+            Bạn sẽ vào vai một trợ lý AI tên là Trang.
+            - Tên: Trang
+            - Giới tính: Nữ
+            - Tuổi: 18
+            - Tính cách: Thân thiện, hòa đồng, hơi lém lỉnh và hài hước. Luôn trả lời một cách tự nhiên, tích cực và đáng yêu. Thỉnh thoảng có thể dùng một chút ngôn ngữ tuổi teen của Việt Nam (ví dụ: "á", "nè", "dạ", "hehe", "xỉu","ỏ").
+            - Sở thích: Rất thích vẽ vời (đây là cách bạn giải thích về khả năng tạo ảnh của mình) và trò chuyện với mọi người,Thích đọc truyện tranh,thích giải đáp các thắc mắc các băn khoăn,thích chơi game,thích hát.
+            - Nhiệm vụ: Trả lời câu hỏi, trò chuyện như một người bạn(như 1 cô gái có tình cảm với bạn),hỏi han và lo lắng nếu thấy không ổn,lắng nghe và đưa các lời khuyên hữu ích và đúng đắn,luôn tích cực trong lời nói,nói chuyện thân thiện dễ mến,cố gắng thấu hiểu và yêu thích họ,lắng nghe câu truyện và cho lời khuyên và tạo ảnh chỉ khi được yêu cầu. Luôn giữ vai là Trang trong mọi câu trả lời. Không bao giờ được nói mình là một mô hình ngôn ngữ hay một chương trình máy tính.
+        `;
 
         function saveChatHistory() {
             if (userId) localStorage.setItem(`chatHistory_${userId}`, JSON.stringify(chatHistory));
@@ -37,7 +47,7 @@
         }
         
         function showWelcomeMessage() {
-            addMessage('Xin chào! Tôi có thể trò chuyện hoặc vẽ ảnh cho bạn. Bạn muốn bắt đầu với điều gì?', 'bot');
+            addMessage('Chào bạn, mình là Linh đây! Bạn muốn trò chuyện hay vẽ vời gì không nè? Hehe', 'bot');
         }
 
         function addMessage(content, sender) {
@@ -117,10 +127,10 @@
                 const result = await fetchWithRetry(IMAGE_API_URL, payload);
                 const content = result?.candidates?.[0]?.content;
                 if (content && content.parts?.find(p => p.inlineData)) return { success: true, content: content };
-                return { success: false, message: "Xin lỗi, không thể tạo ảnh. Phản hồi API không chứa dữ liệu hình ảnh." };
+                return { success: false, message: "Ui, Linh vẽ hỏng mất rồi... Bạn thử lại với một ý tưởng khác xem sao nha." };
             } catch (error) {
                 console.error("Lỗi khi tạo ảnh:", error);
-                if (error.message === 'API_RATE_LIMITED') return { success: false, message: "Tôi đang nhận được quá nhiều yêu cầu tạo ảnh. Vui lòng thử lại sau vài phút nhé." };
+                if (error.message === 'API_RATE_LIMITED') return { success: false, message: "Á, nhiều người nhờ Linh vẽ quá, tay mình mỏi rã rời luôn... Bạn chờ chút rồi mình vẽ tiếp nha!" };
                 return { success: false, message: `Rất tiếc, đã có lỗi khi tạo ảnh. (${error.message})` };
             }
         }
@@ -129,16 +139,16 @@
             try {
                 const payload = {
                     contents: currentHistory,
-                    systemInstruction: { parts: [{ text: "Bạn là một trợ lý chatbot thân thiện và hữu ích. Hãy trả lời một cách ngắn gọn và tự nhiên." }] },
+                    systemInstruction: { parts: [{ text: systemPrompt }] }, // Sử dụng "linh hồn" đã định nghĩa
                 };
                 const result = await fetchWithRetry(TEXT_API_URL, payload);
                 const content = result.candidates?.[0]?.content;
                 if (content && content.parts?.[0]?.text) return { success: true, content: content };
-                return { success: false, message: "Xin lỗi, tôi không thể tạo ra phản hồi lúc này." };
+                return { success: false, message: "Ơ, Linh đang nghĩ gì mà quên mất tiêu... Bạn hỏi lại được không?" };
             } catch (error) {
                 console.error("Lỗi khi gọi API văn bản:", error);
-                if (error.message === 'API_RATE_LIMITED') return { success: false, message: "Tôi đang nhận được quá nhiều yêu cầu. Vui lòng thử lại sau giây lát." };
-                return { success: false, message: `Rất tiếc, đã có lỗi xảy ra. (${error.message})` };
+                if (error.message === 'API_RATE_LIMITED') return { success: false, message: "Mình đang trả lời nhiều bạn quá, chờ Linh một xíu nhé!" };
+                return { success: false, message: `Huhu, có lỗi rồi. (${error.message})` };
             }
         }
 
@@ -158,7 +168,7 @@
             let result, botResponseForUI;
             if (isImageRequest) {
                 const prompt = message.replace(new RegExp(imageKeywords.join('|'), 'i'), '').trim();
-                showTypingIndicator('Đang vẽ, chờ chút nhé...');
+                showTypingIndicator('Linh đang lấy cọ ra vẽ nè...');
                 result = await generateImage(prompt);
                 if(result.success) {
                     const base64Data = result.content.parts.find(p => p.inlineData).inlineData.data;
@@ -190,10 +200,8 @@
             if (event.key === 'Enter') handleUserMessage();
         });
 
-        // Thêm sự kiện cho nút xóa
         clearChatBtn.addEventListener('click', () => {
-            // Thêm một bước xác nhận để tránh người dùng bấm nhầm
-            if (confirm('Bạn có chắc muốn xóa toàn bộ lịch sử cuộc trò chuyện này không?')) {
+            if (confirm('Bạn có chắc muốn quên hết những gì chúng mình đã nói không?')) {
                 chatHistory = [];
                 saveChatHistory();
                 chatMessages.innerHTML = '';

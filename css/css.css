@@ -1,4 +1,4 @@
-      /* Tùy chỉnh thanh cuộn cho giao diện tối */
+     /* Tùy chỉnh thanh cuộn cho giao diện tối */
         #chat-messages::-webkit-scrollbar {
             width: 8px;
         }

@@ -1,16 +1,16 @@
-
+      /* Tùy chỉnh thanh cuộn cho giao diện tối */
         #chat-messages::-webkit-scrollbar {
             width: 8px;
         }
         #chat-messages::-webkit-scrollbar-track {
-            background: #1f2937; 
+            background: #1f2937; /* bg-gray-800 */
         }
         #chat-messages::-webkit-scrollbar-thumb {
-            background: #4b5563; 
+            background: #4b5563; /* bg-gray-600 */
             border-radius: 4px;
         }
         #chat-messages::-webkit-scrollbar-thumb:hover {
-            background: #6b7280; 
+            background: #6b7280; /* bg-gray-500 */
         }
         /* Hiệu ứng gõ phím */
         .typing-indicator span {
@@ -18,7 +18,7 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background-color: #9ca3af; 
+            background-color: #9ca3af; /* text-gray-400 */
             animation: bounce 1.4s infinite ease-in-out both;
         }
         .typing-indicator span:nth-child(2) {

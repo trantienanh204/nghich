@@ -1,6 +1,7 @@
-const chatMessages = document.getElementById('chat-messages');
+    const chatMessages = document.getElementById('chat-messages');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
+        const clearChatBtn = document.getElementById('clear-chat-btn'); // Lấy nút mới
         
         let userId;
         let chatHistory = [];
@@ -34,6 +35,10 @@ const chatMessages = document.getElementById('chat-messages');
                 if (content) addMessage(content, sender);
             });
         }
+        
+        function showWelcomeMessage() {
+            addMessage('Xin chào! Tôi có thể trò chuyện hoặc vẽ ảnh cho bạn. Bạn muốn bắt đầu với điều gì?', 'bot');
+        }
 
         function addMessage(content, sender) {
             const messageDiv = document.createElement('div');
@@ -47,7 +52,6 @@ const chatMessages = document.getElementById('chat-messages');
                  messageBubble.innerHTML = `<img src="${content}" alt="Generated Image" class="message-image">`;
                  messageBubble.classList.remove('px-4', 'py-3');
             } else {
-               
                 const urlRegex = /(https?:\/\/)?([\w-]+\.[\w-]{2,63}(?:\.[\w-]+)*(?:\/[^\s]*)?)/gi;
                 const formattedContent = content.replace(urlRegex, (url) => {
                     const hasProtocol = /^(https?:\/\/)/.test(url);
@@ -186,6 +190,17 @@ const chatMessages = document.getElementById('chat-messages');
             if (event.key === 'Enter') handleUserMessage();
         });
 
+        // Thêm sự kiện cho nút xóa
+        clearChatBtn.addEventListener('click', () => {
+            // Thêm một bước xác nhận để tránh người dùng bấm nhầm
+            if (confirm('Bạn có chắc muốn xóa toàn bộ lịch sử cuộc trò chuyện này không?')) {
+                chatHistory = [];
+                saveChatHistory();
+                chatMessages.innerHTML = '';
+                showWelcomeMessage();
+            }
+        });
+
         window.addEventListener('load', () => {
             userId = localStorage.getItem('chatbotUserId');
             if (!userId) {
@@ -195,7 +210,7 @@ const chatMessages = document.getElementById('chat-messages');
             loadChatHistory();
             renderChatHistory();
             if (chatHistory.length === 0) {
-                 addMessage('Xin chào! Tôi có thể trò chuyện hoặc vẽ ảnh cho bạn. Bạn muốn bắt đầu với điều gì?', 'bot');
+                 showWelcomeMessage();
             }
             userInput.disabled = false;
             sendBtn.disabled = false;

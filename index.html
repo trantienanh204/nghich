@@ -1,36 +1,83 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Chatbot Tạo Ảnh</title>
+    <!-- Tích hợp Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/css.css">
+    <style>
+        /* Tùy chỉnh thanh cuộn cho giao diện tối */
+        #chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chat-messages::-webkit-scrollbar-track {
+            background: #1f2937; /* bg-gray-800 */
+        }
+        #chat-messages::-webkit-scrollbar-thumb {
+            background: #4b5563; /* bg-gray-600 */
+            border-radius: 4px;
+        }
+        #chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* bg-gray-500 */
+        }
+        /* Hiệu ứng gõ phím */
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #9ca3af; /* text-gray-400 */
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(2) {
+            animation-delay: -0.32s;
+        }
+        .typing-indicator span:nth-child(3) {
+            animation-delay: -0.16s;
+        }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+        .message-image {
+            max-width: 100%;
+            border-radius: 1rem;
+        }
+    </style>
 </head>
 <body class="bg-gray-900 font-sans flex items-center justify-center min-h-screen">
 
     <div class="w-full max-w-lg mx-auto bg-gray-800 rounded-2xl shadow-2xl flex flex-col h-[80vh]">
         <!-- Header -->
-        <div class="bg-gray-900 text-white p-4 rounded-t-2xl flex items-center shadow-lg border-b border-gray-700">
-            <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center mr-4 ring-2 ring-indigo-500">
-                 <!-- Biểu tượng Bot SVG -->
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V3m0 18v-3M5.636 5.636L4.222 4.222m15.556 15.556L18.364 18.364M18.364 5.636L19.778 4.222m-15.556 15.556L5.636 18.364M12 16a4 4 0 100-8 4 4 0 000 8z"></path></svg>
+        <div class="bg-gray-900 text-white p-4 rounded-t-2xl flex items-center justify-between shadow-lg border-b border-gray-700">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center mr-4 ring-2 ring-indigo-500">
+                     <!-- Biểu tượng Bot SVG -->
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V3m0 18v-3M5.636 5.636L4.222 4.222m15.556 15.556L18.364 18.364M18.364 5.636L19.778 4.222m-15.556 15.556L5.636 18.364M12 16a4 4 0 100-8 4 4 0 000 8z"></path></svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-100">AI Chatbot Sáng Tạo</h1>
+                    <p class="text-sm text-green-400">Đang hoạt động</p>
+                </div>
             </div>
-            <div>
-                <h1 class="text-xl font-bold text-gray-100">AI Chatbot Sáng Tạo</h1>
-                <p class="text-sm text-green-400">Đang hoạt động</p>
-            </div>
+            <!-- Nút xóa cuộc trò chuyện -->
+            <button id="clear-chat-btn" class="p-2 rounded-full hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" title="Bắt đầu cuộc trò chuyện mới">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
         </div>
 
+        <!-- Khung Chat -->
         <div id="chat-messages" class="flex-1 p-6 overflow-y-auto bg-gray-800">
+            <!-- Tin nhắn sẽ được thêm vào đây -->
         </div>
 
+        <!-- Khung nhập liệu -->
         <div class="p-4 bg-gray-900 border-t border-gray-700 rounded-b-2xl">
             <div class="flex items-center space-x-3">
                 <input type="text" id="user-input" placeholder="Nhập tin nhắn hoặc yêu cầu vẽ..." class="flex-1 p-3 bg-gray-700 text-gray-200 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 transition placeholder-gray-400" disabled>
                 <button id="send-btn" class="bg-indigo-600 text-white rounded-full p-3 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition transform hover:scale-105" disabled>
-                  
+                    <!-- Biểu tượng Gửi SVG -->
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </button>
             </div>
@@ -38,7 +85,7 @@
     </div>
 
     <script src="js/jsjs.js">
-        
+    
     </script>
 </body>
 </html>

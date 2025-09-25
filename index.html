@@ -82,20 +82,57 @@
         const chatMessages = document.getElementById('chat-messages');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
+        
+        // Cải tiến: Khai báo các biến để quản lý người dùng và lịch sử chat
+        let userId;
         let chatHistory = [];
 
         const API_KEY = "AIzaSyBxbfi4h-fJMy1W7RcoLepJmHgmaBLKaMo";
         const TEXT_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
         const IMAGE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${API_KEY}`;
 
-        // Hàm sleep để tạo độ trễ
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+        // Cải tiến: Các hàm để lưu, tải và hiển thị lại lịch sử chat
+        function saveChatHistory() {
+            if (userId) {
+                localStorage.setItem(`chatHistory_${userId}`, JSON.stringify(chatHistory));
+            }
+        }
+
+        function loadChatHistory() {
+            if (userId) {
+                const savedHistory = localStorage.getItem(`chatHistory_${userId}`);
+                chatHistory = savedHistory ? JSON.parse(savedHistory) : [];
+            }
+        }
+
+        function renderChatHistory() {
+            chatMessages.innerHTML = '';
+            chatHistory.forEach(msg => {
+                const sender = msg.role === 'user' ? 'user' : 'bot';
+                // Xử lý cả tin nhắn văn bản và hình ảnh khi tải lại
+                const textPart = msg.parts.find(p => p.text);
+                const imagePart = msg.parts.find(p => p.inlineData);
+                let content = '';
+
+                if (textPart) {
+                    content = textPart.text;
+                } else if (imagePart) {
+                    content = `data:image/png;base64,${imagePart.inlineData.data}`;
+                }
+                
+                if (content) {
+                    addMessage(content, sender);
+                }
+            });
+        }
+
 
         function addMessage(content, sender) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `flex mb-4 ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
             const messageBubble = document.createElement('div');
-            // THAY ĐỔI GIAO DIỆN: Cập nhật màu sắc cho tin nhắn
             messageBubble.className = `max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
                 sender === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-gray-700 text-gray-200 rounded-bl-none'
             }`;
@@ -114,7 +151,6 @@
             const typingDiv = document.createElement('div');
             typingDiv.id = 'typing-indicator';
             typingDiv.className = 'flex justify-start mb-4';
-            // THAY ĐỔI GIAO DIỆN: Cập nhật màu cho chỉ báo đang gõ
             typingDiv.innerHTML = `
                 <div class="bg-gray-700 px-4 py-3 rounded-2xl rounded-bl-none">
                     ${text ? `<p class="text-sm text-gray-400 mb-1">${text}</p>` : ''}
@@ -138,76 +174,56 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-
-                    if (response.ok) {
-                        return await response.json();
-                    }
-                    
+                    if (response.ok) return await response.json();
                     if (response.status === 429) {
                         const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
                         console.warn(`Rate limited. Retrying in ${delay.toFixed(0)}ms...`);
                         await sleep(delay);
-                        lastError = new Error(`API_RATE_LIMITED`); // Sử dụng mã lỗi đặc biệt
+                        lastError = new Error(`API_RATE_LIMITED`);
                         continue; 
                     }
-                    
                     lastError = new Error(`Lỗi API: ${response.status}`);
                     break; 
-
-                } catch (error) {
-                    lastError = error;
-                }
+                } catch (error) { lastError = error; }
             }
             throw lastError;
         }
 
         async function generateImage(prompt) {
             try {
-                const detailedPrompt = `Một bức ảnh chất lượng cao, siêu thực về: ${prompt}`;
                 const payload = {
-                    contents: [{ parts: [{ text: detailedPrompt }] }],
+                    contents: [{ parts: [{ text: `Một bức ảnh chất lượng cao, siêu thực về: ${prompt}` }] }],
                     generationConfig: { responseModalities: ['IMAGE'] },
                 };
-
                 const result = await fetchWithRetry(IMAGE_API_URL, payload);
-                
-                const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-                if (base64Data) {
-                    return `data:image/png;base64,${base64Data}`;
+                const content = result?.candidates?.[0]?.content;
+                if (content && content.parts?.find(p => p.inlineData)) {
+                    return { success: true, content: content };
                 }
-                return "Xin lỗi, không thể tạo ảnh. Phản hồi API không chứa dữ liệu hình ảnh.";
+                return { success: false, message: "Xin lỗi, không thể tạo ảnh. Phản hồi API không chứa dữ liệu hình ảnh." };
             } catch (error) {
                 console.error("Lỗi khi tạo ảnh:", error);
-                if (error.message === 'API_RATE_LIMITED') {
-                    return "Tôi đang nhận được quá nhiều yêu cầu tạo ảnh. Vui lòng thử lại sau vài phút nhé.";
-                }
-                return `Rất tiếc, đã có lỗi khi tạo ảnh. (${error.message})`;
+                if (error.message === 'API_RATE_LIMITED') return { success: false, message: "Tôi đang nhận được quá nhiều yêu cầu tạo ảnh. Vui lòng thử lại sau vài phút nhé." };
+                return { success: false, message: `Rất tiếc, đã có lỗi khi tạo ảnh. (${error.message})` };
             }
         }
         
-        async function getAIResponse(prompt) {
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+        async function getAIResponse(currentHistory) {
             try {
                 const payload = {
-                    contents: chatHistory,
+                    contents: currentHistory,
                     systemInstruction: { parts: [{ text: "Bạn là một trợ lý chatbot thân thiện và hữu ích. Hãy trả lời một cách ngắn gọn và tự nhiên." }] },
                 };
-
                 const result = await fetchWithRetry(TEXT_API_URL, payload);
-
-                const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (aiText) {
-                    chatHistory.push({ role: "model", parts: [{ text: aiText }] });
-                    return aiText;
+                const content = result.candidates?.[0]?.content;
+                if (content && content.parts?.[0]?.text) {
+                    return { success: true, content: content };
                 }
-                return "Xin lỗi, tôi không thể tạo ra phản hồi lúc này.";
+                return { success: false, message: "Xin lỗi, tôi không thể tạo ra phản hồi lúc này." };
             } catch (error) {
                 console.error("Lỗi khi gọi API văn bản:", error);
-                chatHistory.pop();
-                if (error.message === 'API_RATE_LIMITED') {
-                     return "Tôi đang nhận được quá nhiều yêu cầu. Vui lòng thử lại sau giây lát.";
-                }
-                return `Rất tiếc, đã có lỗi xảy ra. (${error.message})`;
+                if (error.message === 'API_RATE_LIMITED') return { success: false, message: "Tôi đang nhận được quá nhiều yêu cầu. Vui lòng thử lại sau giây lát." };
+                return { success: false, message: `Rất tiếc, đã có lỗi xảy ra. (${error.message})` };
             }
         }
 
@@ -215,6 +231,11 @@
             const message = userInput.value.trim();
             if (message === '') return;
             addMessage(message, 'user');
+
+            // Cải tiến: Quản lý lịch sử chat tập trung
+            chatHistory.push({ role: "user", parts: [{ text: message }] });
+            saveChatHistory();
+
             userInput.value = '';
             userInput.disabled = true;
             sendBtn.disabled = true;
@@ -222,18 +243,37 @@
             const imageKeywords = ['vẽ', 'tạo ảnh', 'generate', 'draw', 'hãy vẽ', 'vẽ cho tôi'];
             const isImageRequest = imageKeywords.some(keyword => message.toLowerCase().startsWith(keyword));
 
-            let botResponse;
+            let result;
+            let botResponseForUI;
+
             if (isImageRequest) {
                 const prompt = message.replace(new RegExp(imageKeywords.join('|'), 'i'), '').trim();
                 showTypingIndicator('Đang vẽ, chờ chút nhé...');
-                botResponse = await generateImage(prompt);
+                result = await generateImage(prompt);
+                if(result.success) {
+                    const base64Data = result.content.parts.find(p => p.inlineData).inlineData.data;
+                    botResponseForUI = `data:image/png;base64,${base64Data}`;
+                }
             } else {
                 showTypingIndicator();
-                botResponse = await getAIResponse(message);
+                result = await getAIResponse([...chatHistory]);
+                if(result.success) {
+                    botResponseForUI = result.content.parts[0].text;
+                }
             }
             
             hideTypingIndicator();
-            addMessage(botResponse, 'bot');
+
+            if (result && result.success) {
+                chatHistory.push(result.content);
+                saveChatHistory();
+                addMessage(botResponseForUI, 'bot');
+            } else {
+                chatHistory.pop(); // Xóa tin nhắn của người dùng nếu yêu cầu thất bại
+                saveChatHistory();
+                addMessage(result ? result.message : "Đã xảy ra lỗi không xác định.", 'bot');
+            }
+
             userInput.disabled = false;
             sendBtn.disabled = false;
             userInput.focus();
@@ -244,8 +284,24 @@
             if (event.key === 'Enter') handleUserMessage();
         });
 
+        // Cải tiến: Khởi tạo ứng dụng khi trang được tải
         window.addEventListener('load', () => {
-            addMessage('Xin chào! Tôi có thể trò chuyện hoặc vẽ ảnh cho bạn. Bạn muốn bắt đầu với điều gì?', 'bot');
+            // 1. Lấy hoặc tạo ID người dùng
+            userId = localStorage.getItem('chatbotUserId');
+            if (!userId) {
+                userId = crypto.randomUUID();
+                localStorage.setItem('chatbotUserId', userId);
+            }
+            
+            // 2. Tải và hiển thị lịch sử chat của người dùng này
+            loadChatHistory();
+            renderChatHistory();
+
+            // 3. Hiển thị tin nhắn chào mừng nếu là lần đầu
+            if (chatHistory.length === 0) {
+                 addMessage('Xin chào! Tôi có thể trò chuyện hoặc vẽ ảnh cho bạn. Bạn muốn bắt đầu với điều gì?', 'bot');
+            }
+
             userInput.disabled = false;
             sendBtn.disabled = false;
         });

@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Chatbot Tạo Ảnh</title>
-    <!-- Tích hợp Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/css.css">
 </head>
@@ -24,17 +23,14 @@
             </div>
         </div>
 
-        <!-- Khung Chat -->
         <div id="chat-messages" class="flex-1 p-6 overflow-y-auto bg-gray-800">
-            <!-- Tin nhắn sẽ được thêm vào đây -->
         </div>
 
-        <!-- Khung nhập liệu -->
         <div class="p-4 bg-gray-900 border-t border-gray-700 rounded-b-2xl">
             <div class="flex items-center space-x-3">
                 <input type="text" id="user-input" placeholder="Nhập tin nhắn hoặc yêu cầu vẽ..." class="flex-1 p-3 bg-gray-700 text-gray-200 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 transition placeholder-gray-400" disabled>
                 <button id="send-btn" class="bg-indigo-600 text-white rounded-full p-3 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition transform hover:scale-105" disabled>
-                    <!-- Biểu tượng Gửi SVG -->
+                  
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </button>
             </div>

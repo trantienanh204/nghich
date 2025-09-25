@@ -47,7 +47,7 @@ const chatMessages = document.getElementById('chat-messages');
                  messageBubble.innerHTML = `<img src="${content}" alt="Generated Image" class="message-image">`;
                  messageBubble.classList.remove('px-4', 'py-3');
             } else {
-                // NÂNG CẤP: Logic phát hiện URL mới, thông minh hơn
+               
                 const urlRegex = /(https?:\/\/)?([\w-]+\.[\w-]{2,63}(?:\.[\w-]+)*(?:\/[^\s]*)?)/gi;
                 const formattedContent = content.replace(urlRegex, (url) => {
                     const hasProtocol = /^(https?:\/\/)/.test(url);

@@ -68,7 +68,7 @@
                 <input type="text" id="user-input" placeholder="Nhập tin nhắn của bạn..." class="flex-1 p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition" disabled>
                 <button id="send-btn" class="bg-blue-600 text-white rounded-full p-3 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition transform hover:scale-105" disabled>
                     <!-- Biểu tượng Gửi SVG -->
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap-round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </button>
             </div>
         </div>
@@ -80,7 +80,7 @@
         const sendBtn = document.getElementById('send-btn');
         let chatHistory = [];
 
-    
+        // API key của bạn đã được cấu hình.
         const API_KEY = "AIzaSyBxbfi4h-fJMy1W7RcoLepJmHgmaBLKaMo";
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
 
@@ -127,7 +127,7 @@
             }
         }
         
-        
+        // Hàm gọi API Gemini để nhận phản hồi
         async function getAIResponse(prompt) {
              // Thêm tin nhắn mới của người dùng vào lịch sử chat
             chatHistory.push({ role: "user", parts: [{ text: prompt }] });
@@ -135,7 +135,7 @@
             try {
                 const payload = {
                     contents: chatHistory,
-                
+                     // Hướng dẫn hệ thống
                     systemInstruction: {
                         parts: [{ text: "Bạn là một trợ lý chatbot thân thiện và hữu ích. Hãy trả lời một cách ngắn gọn và tự nhiên." }]
                     },
@@ -156,7 +156,7 @@
                 const aiText = candidate?.content?.parts?.[0]?.text;
 
                 if (aiText) {
-                   
+                    // Thêm phản hồi của AI vào lịch sử chat
                     chatHistory.push({ role: "model", parts: [{ text: aiText }] });
                     return aiText;
                 } else {
@@ -165,19 +165,16 @@
 
             } catch (error) {
                 console.error("Lỗi khi gọi API:", error);
-               
+                // Xóa tin nhắn cuối cùng của người dùng khỏi lịch sử nếu có lỗi
                 chatHistory.pop();
                 return "Rất tiếc, đã có lỗi xảy ra. Vui lòng thử lại sau.";
             }
         }
 
-   
+        // Hàm xử lý khi người dùng gửi tin nhắn
         async function handleUserMessage() {
             const message = userInput.value.trim();
-            if (message === '' || API_KEY === "AIzaSyBxbfi4h-fJMy1W7RcoLepJmHgmaBLKaMo") {
-                if(API_KEY === "AIzaSyBxbfi4h-fJMy1W7RcoLepJmHgmaBLKaMo"){
-                    addMessage("Vui lòng cấu hình API key trong file HTML trước khi sử dụng.", "bot");
-                }
+            if (message === '') {
                 return;
             };
 
@@ -208,11 +205,7 @@
 
         // Tin nhắn chào mừng ban đầu từ bot
         window.addEventListener('load', () => {
-            if (API_KEY === "fJMy1W7RcoLepJmHgmaBLKaMo") {
-                addMessage('Xin chào! Vui lòng cấu hình API key của Google AI trong mã nguồn để tôi có thể hoạt động.', 'bot');
-            } else {
-                addMessage('Xin chào! Tôi là một chatbot AI. Bạn muốn trò chuyện về điều gì?', 'bot');
-            }
+            addMessage('Xin chào! Tôi là một chatbot AI. Bạn muốn trò chuyện về điều gì?', 'bot');
             userInput.disabled = false;
             sendBtn.disabled = false;
         });

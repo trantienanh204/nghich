@@ -223,7 +223,7 @@ Trước khi hoàn tất, hãy kiểm tra lại bài viết của bạn và đ�
                 const result = await fetchWithRetry(IMAGE_API_URL, payload);
                 const content = result?.candidates?.[0]?.content;
                 if (content && content.parts?.find(p => p.inlineData)) return { success: true, content: content };
-                return { success: false, message: "Ui, Linh vẽ hỏng mất rồi... Bạn thử lại với một ý tưởng khác xem sao nha." };
+                return { success: false, message: "Ui, Trang vẽ hỏng mất rồi... Bạn thử lại với một ý tưởng khác xem sao nha." };
             } catch (error) {
                 console.error("Lỗi khi tạo ảnh:", error);
                 if (error.message === 'API_RATE_LIMITED') return { success: false, message: "Á, nhiều người nhờ Linh vẽ quá, tay mình mỏi rã rời luôn... Bạn chờ chút rồi mình vẽ tiếp nha!" };
@@ -240,7 +240,7 @@ Trước khi hoàn tất, hãy kiểm tra lại bài viết của bạn và đ�
                 const result = await fetchWithRetry(TEXT_API_URL, payload);
                 const content = result.candidates?.[0]?.content;
                 if (content && content.parts?.[0]?.text) return { success: true, content: content };
-                return { success: false, message: "Ơ, Linh đang nghĩ gì mà quên mất tiêu... Bạn hỏi lại được không?" };
+                return { success: false, message: "Ơ, Trang đang nghĩ gì mà quên mất tiêu... Bạn hỏi lại được không?" };
             } catch (error) {
                 console.error("Lỗi khi gọi API văn bản:", error);
                 if (error.message === 'API_RATE_LIMITED') return { success: false, message: "Mình đang trả lời nhiều bạn quá, chờ Linh một xíu nhé!" };
@@ -264,7 +264,7 @@ Trước khi hoàn tất, hãy kiểm tra lại bài viết của bạn và đ�
             let result, botResponseForUI;
             if (isImageRequest) {
                 const prompt = message.replace(new RegExp(imageKeywords.join('|'), 'i'), '').trim();
-                showTypingIndicator('Linh đang lấy cọ ra vẽ nè...');
+                showTypingIndicator('Trang đang lấy cọ ra vẽ nè...');
                 result = await generateImage(prompt);
                 if(result.success) {
                     const base64Data = result.content.parts.find(p => p.inlineData).inlineData.data;
